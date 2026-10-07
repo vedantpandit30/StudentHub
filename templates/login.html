@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — StudentHub{% endblock %}
+
+{% block content %}
+<div class="login-box">
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <span class="brand-icon-box" style="width: 28px; height: 28px; font-size: 14px;">S</span>
+        <span style="font-weight: 700; font-size: 16px;">StudentHub</span>
+    </div>
+
+    <h1 class="login-title">Sign in to your account</h1>
+    <p class="login-desc">Enter your portal username (or email) and password.</p>
+
+    <form method="POST" action="/login">
+        <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" for="username">Username or Email</label>
+            <input 
+                type="text" 
+                id="username" 
+                name="username" 
+                class="form-control" 
+                placeholder="e.g. aarav  or  aarav.sharma@example.in" 
+                required 
+                autofocus
+                autocomplete="username"
+            >
+        </div>
+
+        <div class="form-group" style="margin-bottom: 22px;">
+            <label class="form-label" for="password">Password</label>
+            <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                class="form-control" 
+                placeholder="••••••••" 
+                required
+                autocomplete="current-password"
+            >
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 11px;">
+            Sign In &rarr;
+        </button>
+    </form>
+
+    <div style="margin-top: 20px; padding: 12px 14px; background: var(--bg-surface-hover); border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 12px; color: var(--text-muted); line-height: 1.7;">
+        <strong style="color: var(--text-primary); display: block; margin-bottom: 4px;">Login Help</strong>
+        Your <strong>username</strong> is shown on your student profile page.<br>
+        Default password format: <code style="color: var(--secondary);">username + 123</code><br>
+        For example: username <code style="color: var(--secondary);">aarav</code> → password <code style="color: var(--secondary);">aarav123</code>
+    </div>
+</div>
+{% endblock %}

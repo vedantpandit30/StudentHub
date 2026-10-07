@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Overview — StudentHub{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Executive Dashboard</h1>
+        <p class="page-subtitle">Real-time academic performance, enrollment analytics, and attendance telemetry.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <a href="/attendance" class="btn btn-secondary">Record Attendance</a>
+        <a href="/student/add" class="btn btn-primary">+ Enroll Student</a>
+    </div>
+</div>
+
+<!-- STATS CARDS WITH COLOR THEMES -->
+<div class="stats-grid">
+    <div class="stat-card theme-indigo">
+        <div class="stat-header">
+            <span class="stat-label">Total Enrollment</span>
+            <span class="stat-pill indigo">Roster</span>
+        </div>
+        <div class="stat-value">{{ total_students }}</div>
+        <span class="stat-sub">{{ total_courses }} Degree Programs</span>
+    </div>
+
+    <div class="stat-card theme-emerald">
+        <div class="stat-header">
+            <span class="stat-label">Active Enrolled</span>
+            <span class="stat-pill emerald">Good Standing</span>
+        </div>
+        <div class="stat-value" style="color: #10b981;">{{ active_students }}</div>
+        <span class="stat-sub">{{ ((active_students / total_students * 100)|round|int) if total_students else 0 }}% active engagement</span>
+    </div>
+
+    <div class="stat-card theme-rose">
+        <div class="stat-header">
+            <span class="stat-label">Inactive / On Leave</span>
+            <span class="stat-pill rose">Needs Review</span>
+        </div>
+        <div class="stat-value" style="color: #f43f5e;">{{ inactive_students }}</div>
+        <span class="stat-sub">Suspended or on break</span>
+    </div>
+
+    <div class="stat-card theme-sky">
+        <div class="stat-header">
+            <span class="stat-label">Male Students</span>
+            <span class="stat-pill indigo">Cohorts</span>
+        </div>
+        <div class="stat-value" style="color: #0ea5e9;">{{ male_students }}</div>
+        <span class="stat-sub">{{ ((male_students / total_students * 100)|round|int) if total_students else 0 }}% of student body</span>
+    </div>
+
+    <div class="stat-card theme-fuchsia">
+        <div class="stat-header">
+            <span class="stat-label">Female Students</span>
+            <span class="stat-pill indigo">Cohorts</span>
+        </div>
+        <div class="stat-value" style="color: #d946ef;">{{ female_students }}</div>
+        <span class="stat-sub">{{ ((female_students / total_students * 100)|round|int) if total_students else 0 }}% of student body</span>
+    </div>
+
+    <div class="stat-card theme-amber">
+        <div class="stat-header">
+            <span class="stat-label">Active Programs</span>
+            <span class="stat-pill amber">Departments</span>
+        </div>
+        <div class="stat-value" style="color: #f59e0b;">{{ total_courses }}</div>
+        <span class="stat-sub">Undergraduate & Masters</span>
+    </div>
+</div>
+
+<!-- CHARTS -->
+<div class="charts-grid">
+    <div class="chart-box">
+        <div class="chart-header">
+            <span>Enrollment Status Distribution</span>
+            <span class="stat-pill emerald">Live Gauge</span>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-box">
+        <div class="chart-header">
+            <span>Program Cohort Distribution</span>
+            <span class="stat-pill indigo">Academic Year</span>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="courseChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- TWO COLUMN GRID: RECENT STUDENTS + CAMPUS NOTICES & PROGRAM BREAKDOWN -->
+<div class="two-col-grid">
+    <!-- RECENT STUDENTS PANEL -->
+    <section class="panel">
+        <div class="panel-header">
+            <h2 class="panel-title">Recently Enrolled Students</h2>
+            <a href="/students" class="btn btn-sm btn-secondary">Full Directory &rarr;</a>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Student Profile</th>
+                        <th>Program</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in recent_students %}
+                    <tr>
+                        <td><span style="font-family: monospace; color: var(--text-dim); font-weight: 700;">#{{ "%03d"|format(s.id) }}</span></td>
+                        <td>
+                            <div class="user-cell">
+                                <div class="avatar-circle avatar-color-{{ s.id % 6 }}">
+                                    {{ s.name[:2]|upper }}
+                                </div>
+                                <div>
+                                    <div class="user-meta-name">{{ s.name }}</div>
+                                    <div class="user-meta-sub">{{ s.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge-course">{{ s.course }}</span></td>
+                        <td>
+                            <span class="status-pill {{ 'active' if s.status == 'Active' else 'inactive' }}">
+                                <span class="dot"></span>
+                                {{ s.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/student/{{ s.id }}" class="btn btn-sm btn-secondary">View Profile</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- RIGHT COLUMN: NOTICE BOARD & PROGRAM PROGRESS -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <!-- CAMPUS NOTICES & DEADLINES -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Campus Bulletin</h2>
+                <span class="stat-pill amber">Semester 2026</span>
+            </div>
+            <div class="panel-body">
+                <div class="notice-board">
+                    <div class="notice-item">
+                        <div class="notice-title">Midterm Examination Schedules Released</div>
+                        <div class="notice-time">Practical labs commence October 15, 2026</div>
+                    </div>
+                    <div class="notice-item amber">
+                        <div class="notice-title">Attendance Minimum Threshold (75%)</div>
+                        <div class="notice-time">Faculty submission deadline by Friday</div>
+                    </div>
+                    <div class="notice-item emerald">
+                        <div class="notice-title">Central Library Catalog Integration Active</div>
+                        <div class="notice-time">Book reservation system now online</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROGRAM ENROLLMENT BREAKDOWN -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Program Capacities</h2>
+            </div>
+            <div class="panel-body" style="display: flex; flex-direction: column; gap: 14px;">
+                {% for c in course_stats %}
+                {% set pct = ((c.total / total_students * 100)|round|int) if total_students else 0 %}
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 6px;">
+                        <span>{{ c.course }}</span>
+                        <span style="color: var(--text-muted);">{{ c.total }} enrolled ({{ pct }}%)</span>
+                    </div>
+                    <div style="height: 7px; background: var(--bg-subtle); border-radius: 99px; overflow: hidden;">
+                        <div style="height: 100%; width: {{ pct }}%; background: linear-gradient(90deg, #4f46e5, #8b5cf6); border-radius: 99px;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const isDark = document.body.classList.contains("dark-mode");
+    const textColor = isDark ? "#cbd5e1" : "#475569";
+    const gridColor = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)";
+
+    // 1. Status Donut Chart with vibrant Emerald & Rose
+    new Chart(document.getElementById('statusChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Active Enrolled', 'Inactive / Leave'],
+            datasets: [{
+                data: [{{ active_students }}, {{ inactive_students }}],
+                backgroundColor: ['#10b981', '#f43f5e'],
+                hoverBackgroundColor: ['#059669', '#e11d48'],
+                borderWidth: isDark ? 0 : 2,
+                borderColor: '#121829'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '74%',
+            plugins: {
+                legend: { position: 'bottom', labels: { color: textColor, font: { size: 12.5, weight: '600' } } }
+            }
+        }
+    });
+
+    // 2. Program Bar Chart with Royal Indigo Gradient
+    const labels = {{ chart_labels|tojson }};
+    const data = {{ chart_data|tojson }};
+
+    new Chart(document.getElementById('courseChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: '#6366f1',
+                hoverBackgroundColor: '#818cf8',
+                borderRadius: 6,
+                maxBarThickness: 34
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { 
+                    beginAtZero: true, 
+                    ticks: { precision: 0, color: textColor },
+                    grid: { color: gridColor }
+                },
+                x: { 
+                    grid: { display: false }, 
+                    ticks: { color: textColor, font: { size: 11.5, weight: '500' } } 
+                }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+});
+</script>
+{% endblock %}

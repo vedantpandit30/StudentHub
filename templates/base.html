@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}StudentHub{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dark-mode">
+
+    <header class="navbar">
+        <a href="/" class="nav-brand">
+            <span class="brand-icon-box">S</span>
+            <span class="brand-title">StudentHub</span>
+            <span class="brand-badge">Portal</span>
+        </a>
+
+        <nav class="nav-links">
+            <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a>
+            <a href="/students" class="nav-link {% if active_page == 'students' %}active{% endif %}">Students</a>
+            <a href="/attendance" class="nav-link {% if active_page == 'attendance' %}active{% endif %}">Attendance</a>
+            <a href="/courses" class="nav-link {% if active_page == 'courses' %}active{% endif %}">Courses</a>
+            {% if session.get('role') != 'Student' %}
+                <a href="/student/add" class="nav-link {% if active_page == 'add_student' %}active{% endif %}">+ New Student</a>
+            {% else %}
+                <a href="/student/{{ session.get('student_id') }}" class="nav-link">My Profile</a>
+            {% endif %}
+        </nav>
+
+        <div class="nav-user">
+            <button id="themeToggleBtn" class="theme-toggle-btn" title="Toggle theme">◐</button>
+
+            {% if session.get('user') %}
+                <div class="user-badge">
+                    <span class="user-avatar-sm">{{ session.get('user')[:1]|upper }}</span>
+                    <span>{{ session.get('user') }} ({{ session.get('role', 'User') }})</span>
+                </div>
+                <a href="/logout" class="logout-link">Sign out</a>
+            {% else %}
+                <a href="/login" class="btn btn-sm btn-primary">Sign In</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}">
+                            <span>{{ message }}</span>
+                            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>StudentHub &bull; Student Management Portal &bull; {{ db_engine }} Engine</p>
+    </footer>
+
+    <script src="/static/script.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

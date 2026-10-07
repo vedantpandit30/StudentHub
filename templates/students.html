@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Students Directory — StudentHub{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Student Directory</h1>
+        <p class="page-subtitle">Manage student enrollment, profiles, and attendance records.</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <a href="/students/export" class="btn btn-secondary">Export CSV</a>
+        {% if session.get('role') == 'Administrator' %}
+        <a href="/student/add" class="btn btn-primary">+ Add Student</a>
+        {% endif %}
+    </div>
+</div>
+
+<form method="GET" action="/students" class="filter-bar" id="filterForm">
+    <input 
+        type="text" 
+        name="search" 
+        id="searchInput" 
+        class="search-input" 
+        placeholder="Filter by name, email, or contact..." 
+        value="{{ search }}"
+        autocomplete="off"
+    >
+
+    <select name="course_id" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+        <option value="">All Programs</option>
+        {% for course in courses %}
+            <option value="{{ course.id }}" {% if selected_course|string == course.id|string %}selected{% endif %}>
+                {{ course.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+        <option value="">All Statuses</option>
+        <option value="Active" {% if selected_status == 'Active' %}selected{% endif %}>Active</option>
+        <option value="Inactive" {% if selected_status == 'Inactive' %}selected{% endif %}>Inactive</option>
+    </select>
+
+    {% if search or selected_course or selected_status %}
+        <a href="/students" class="btn btn-sm btn-secondary">Clear Filters</a>
+    {% endif %}
+</form>
+
+<section class="panel">
+    <div class="panel-header">
+        <span style="font-size: 13.5px; color: var(--text-secondary); font-weight: 500;">
+            Total: <strong>{{ students|length }}</strong> students
+        </span>
+        <div style="display: flex; gap: 12px; font-size: 12.5px;">
+            <span style="color: #10b981; font-weight: 600;">Active: {{ active_count }}</span>
+            <span style="color: #64748b; font-weight: 600;">Inactive: {{ inactive_count }}</span>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="studentsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Student</th>
+                    <th>Contact</th>
+                    <th>Gender</th>
+                    <th>Course</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="studentsTableBody" data-user-role="{{ session.get('role', '') }}" data-user-student-id="{{ session.get('student_id', '') }}">
+                {% for s in students %}
+                <tr>
+                    <td><span style="font-family: monospace; color: var(--text-muted);">#{{ "%03d"|format(s.id) }}</span></td>
+                    <td>
+                        <div class="user-cell">
+                            <div class="avatar-circle avatar-color-{{ s.id % 6 }}">
+                                {{ s.name[:2]|upper }}
+                            </div>
+                            <div>
+                                <div class="user-meta-name">{{ s.name }}</div>
+                                <div class="user-meta-sub">{{ s.email }} &bull; <span style="color: var(--secondary); font-family: monospace;">@{{ s.username }}</span></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-size: 13px; color: var(--text-secondary);">{{ s.phone or '—' }}</span>
+                    </td>
+                    <td>
+                        <span style="font-size: 13px; color: var(--text-secondary);">{{ s.gender or '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="badge-course">{{ s.course }}</span>
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="status-pill {{ 'active' if s.status == 'Active' else 'inactive' }}">
+                                <span class="dot"></span>
+                                {{ s.status }}
+                            </span>
+                            {% if session.get('role') == 'Administrator' %}
+                            <form method="POST" action="/student/toggle-status/{{ s.id }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-secondary" style="padding: 2px 6px; font-size: 11px;" title="Switch Status">
+                                    ⇄
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 5px;">
+                            <a href="/student/{{ s.id }}" class="btn btn-sm btn-secondary">Profile</a>
+                            {% if session.get('role') == 'Administrator' %}
+                                <a href="/student/edit/{{ s.id }}" class="btn btn-sm btn-secondary">Edit</a>
+                                <form method="POST" action="/student/delete/{{ s.id }}" style="display:inline;" onsubmit="return confirm('Remove student record?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            {% elif session.get('student_id') == s.id %}
+                                <a href="/student/edit/{{ s.id }}" class="btn btn-sm btn-secondary">Edit My Profile</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 36px;">
+                        No students match the selected filter.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Programs & Courses — StudentHub{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Programs & Courses</h1>
+        <p class="page-subtitle">Manage degree tracks, course codes, and department capacities.</p>
+    </div>
+</div>
+
+<div class="two-col-grid">
+    <section class="panel">
+        <div class="panel-header">
+            <h2 class="panel-title">Active Degree Programs ({{ courses|length }})</h2>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Program Name</th>
+                        <th>Code</th>
+                        <th>Enrolled</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in courses %}
+                    <tr>
+                        <td><span style="font-family: monospace; color: var(--text-muted);">#{{ "%02d"|format(c.id) }}</span></td>
+                        <td>
+                            <strong style="color: var(--text-primary);">{{ c.name }}</strong>
+                        </td>
+                        <td>
+                            <span class="badge-course">{{ c.code or 'N/A' }}</span>
+                        </td>
+                        <td>
+                            <a href="/students?course_id={{ c.id }}" style="font-weight: 500; text-decoration: none; color: var(--brand-primary); font-size: 13px;">
+                                {{ c.enrolled_count }} student{{ 's' if c.enrolled_count != 1 else '' }} &rarr;
+                            </a>
+                        </td>
+                        <td>
+                            <form method="POST" action="/courses/delete/{{ c.id }}" style="display:inline;" onsubmit="return confirm('Delete this course?');">
+                                <button type="submit" class="btn btn-sm btn-danger" {% if c.enrolled_count > 0 %}disabled title="Cannot delete program with active students" style="opacity: 0.4; cursor: not-allowed;"{% endif %}>
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel" style="height: fit-content;">
+        <div class="panel-header">
+            <h2 class="panel-title">+ Add New Program</h2>
+        </div>
+        <div class="panel-body">
+            <form method="POST" action="/courses/add">
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" for="course_name">Program Name <span class="req">*</span></label>
+                    <input type="text" id="course_name" name="name" class="form-control" placeholder="e.g. Data Analytics" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" for="course_code">Program Code</label>
+                    <input type="text" id="course_code" name="code" class="form-control" placeholder="e.g. DA-201">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Program</button>
+            </form>
+        </div>
+    </section>
+</div>
+{% endblock %}

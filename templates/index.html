@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>StudentHub</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body class="dark-mode">
+
+    <header class="navbar">
+        <div class="logo">StudentHub</div>
+
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/students">Students</a>
+            <a href="/student/add">Add Student</a>
+        </nav>
+    </header>
+
+    <main class="container">
+
+        <section class="hero">
+            <div>
+                <p class="tag">STUDENT MANAGEMENT SYSTEM</p>
+
+                <h1>Manage Students Easily.</h1>
+
+                <p>
+                    A simple and modern platform to manage
+                    student information in one place.
+                </p>
+
+                <button id="welcomeButton">
+                    Get Started
+                </button>
+            </div>
+        </section>
+
+        <section class="cards">
+
+            <div class="card">
+                <h2>120</h2>
+                <p>Total Students</p>
+            </div>
+
+            <div class="card">
+                <h2>85</h2>
+                <p>Active Students</p>
+            </div>
+
+            <div class="card">
+                <h2>6</h2>
+                <p>Total Courses</p>
+            </div>
+
+        </section>
+
+        <section class="students">
+
+            <h2>Recent Students</h2>
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Course</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <tr>
+                        <td>101</td>
+                        <td>Rahul Sharma</td>
+                        <td>BCA</td>
+                        <td>
+                            <button class="view-btn">View</button>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>102</td>
+                        <td>Ayesha Khan</td>
+                        <td>BSc IT</td>
+                        <td>
+                            <button class="view-btn">View</button>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>103</td>
+                        <td>Arjun Mehta</td>
+                        <td>BCA</td>
+                        <td>
+                            <button class="view-btn">View</button>
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+    </main>
+
+    <footer>
+        <p>StudentHub &copy; 2026</p>
+    </footer>
+
+    <script src="/static/script.js"></script>
+
+</body>
+</html>

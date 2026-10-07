@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance — StudentHub{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Attendance Registry</h1>
+        <p class="page-subtitle">
+            {% if session.get('role') == 'Administrator' %}
+                Track and record daily student attendance.
+            {% else %}
+                Daily attendance registry and session logs (Read Only).
+            {% endif %}
+        </p>
+    </div>
+    {% if session.get('role') == 'Administrator' %}
+    <div style="display: flex; gap: 8px;">
+        <button type="button" class="btn btn-secondary" onclick="markAllPresent()">All Present</button>
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('attendanceForm').submit()">Save Records</button>
+    </div>
+    {% endif %}
+</div>
+
+<form method="GET" action="/attendance" class="filter-bar" id="dateFilterForm">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <label for="attDate" style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Date:</label>
+        <input 
+            type="date" 
+            id="attDate" 
+            name="date" 
+            class="filter-select" 
+            value="{{ selected_date }}"
+            onchange="document.getElementById('dateFilterForm').submit()"
+        >
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <label for="attCourse" style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Program:</label>
+        <select 
+            id="attCourse" 
+            name="course_id" 
+            class="filter-select" 
+            onchange="document.getElementById('dateFilterForm').submit()"
+        >
+            <option value="">All Programs</option>
+            {% for c in courses %}
+                <option value="{{ c.id }}" {% if selected_course|string == c.id|string %}selected{% endif %}>
+                    {{ c.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+</form>
+
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 20px;">
+    <div class="stat-card">
+        <span class="stat-label">Students in Session</span>
+        <div class="stat-value">{{ students|length }}</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Present</span>
+        <div class="stat-value" style="color: #10b981;">{{ present_count }}</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Absent</span>
+        <div class="stat-value" style="color: #ef4444;">{{ absent_count }}</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Late</span>
+        <div class="stat-value" style="color: #f59e0b;">{{ late_count }}</div>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="panel-header">
+        <h2 class="panel-title">Session: {{ selected_date }}</h2>
+        {% if session.get('role') == 'Administrator' %}
+            <span style="font-size: 12.5px; color: var(--text-muted);">Mark attendance per student below</span>
+        {% else %}
+            <span class="stat-pill amber">View Only</span>
+        {% endif %}
+    </div>
+
+    {% if session.get('role') == 'Administrator' %}
+    {# ---- EDITABLE FORM (admin only) ---- #}
+    <form method="POST" action="/attendance" id="attendanceForm">
+        <input type="hidden" name="date" value="{{ selected_date }}">
+        <input type="hidden" name="course_id" value="{{ selected_course }}">
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Student</th>
+                        <th>Program</th>
+                        <th>Status</th>
+                        <th>Attendance Mark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr class="att-row" data-student-id="{{ s.id }}">
+                        <td><span style="font-family: monospace; color: var(--text-muted);">#{{ "%03d"|format(s.id) }}</span></td>
+                        <td>
+                            <div class="user-cell">
+                                <div class="avatar-circle avatar-color-{{ s.id % 6 }}">
+                                    {{ s.name[:2]|upper }}
+                                </div>
+                                <div class="user-meta-name">{{ s.name }}</div>
+                            </div>
+                        </td>
+                        <td><span class="badge-course">{{ s.course }}</span></td>
+                        <td>
+                            <span class="status-pill {{ 'active' if s.status == 'Active' else 'inactive' }}">
+                                <span class="dot"></span>
+                                {{ s.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <input 
+                                type="hidden" 
+                                name="att_{{ s.id }}" 
+                                id="att_input_{{ s.id }}" 
+                                value="{{ attendance_map.get(s.id, 'Present' if s.status == 'Active' else 'Absent') }}"
+                            >
+                            {% set cur = attendance_map.get(s.id, 'Present' if s.status == 'Active' else 'Absent') %}
+                            
+                            <div class="att-group">
+                                <button type="button" class="att-btn present {% if cur == 'Present' %}active{% endif %}" onclick="setAttendance({{ s.id }}, 'Present', this)">
+                                    Present
+                                </button>
+                                <button type="button" class="att-btn late {% if cur == 'Late' %}active{% endif %}" onclick="setAttendance({{ s.id }}, 'Late', this)">
+                                    Late
+                                </button>
+                                <button type="button" class="att-btn absent {% if cur == 'Absent' %}active{% endif %}" onclick="setAttendance({{ s.id }}, 'Absent', this)">
+                                    Absent
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                            No students enrolled in this program.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 8px;">
+            <a href="/attendance" class="btn btn-secondary">Reset</a>
+            <button type="submit" class="btn btn-primary">Save Attendance</button>
+        </div>
+    </form>
+
+    {% else %}
+    {# ---- READ-ONLY VIEW (student) ---- #}
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Student</th>
+                    <th>Program</th>
+                    <th>Enrollment Status</th>
+                    <th>Attendance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td><span style="font-family: monospace; color: var(--text-muted);">#{{ "%03d"|format(s.id) }}</span></td>
+                    <td>
+                        <div class="user-cell">
+                            <div class="avatar-circle avatar-color-{{ s.id % 6 }}">
+                                {{ s.name[:2]|upper }}
+                            </div>
+                            <div class="user-meta-name">{{ s.name }}</div>
+                        </div>
+                    </td>
+                    <td><span class="badge-course">{{ s.course }}</span></td>
+                    <td>
+                        <span class="status-pill {{ 'active' if s.status == 'Active' else 'inactive' }}">
+                            <span class="dot"></span>
+                            {{ s.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% set att = attendance_map.get(s.id, '—') %}
+                        <span class="status-pill {% if att == 'Present' %}active{% elif att == 'Absent' %}inactive{% else %}{% endif %}"
+                              style="{% if att == 'Late' %}background: var(--amber-light); color: var(--amber); border-color: var(--amber-border);{% endif %}">
+                            {% if att != '—' %}<span class="dot"></span>{% endif %}
+                            {{ att }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No students enrolled in this program.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div style="padding: 14px 22px; border-top: 1px solid var(--border-color); text-align: right; font-size: 12.5px; color: var(--text-dim);">
+        Attendance records are managed by the institute administrator.
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

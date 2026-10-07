@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.name }} — Profile{% endblock %}
+
+{% block content %}
+<div class="page-header" style="max-width: 860px; margin: 0 auto 20px auto;">
+    <div>
+        <h1 class="page-title">Student Profile</h1>
+        <p class="page-subtitle">Academic profile and contact history.</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <a href="/students" class="btn btn-secondary">&larr; Directory</a>
+        {% if session.get('role') == 'Administrator' %}
+            <a href="/student/edit/{{ student.id }}" class="btn btn-primary">Edit Profile</a>
+        {% elif session.get('student_id') == student.id %}
+            <a href="/student/edit/{{ student.id }}" class="btn btn-primary">Edit My Profile</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="profile-card" style="max-width: 860px; margin: 0 auto 24px auto;">
+    <div class="profile-top">
+        <div class="profile-avatar-row">
+            <div class="profile-avatar-lg">
+                {{ student.name[:2]|upper }}
+            </div>
+            <div>
+                <h2 style="font-size: 20px; font-weight: 700; color: var(--text-primary);">{{ student.name }}</h2>
+                <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                    <span class="badge-course">{{ student.course }}</span>
+                    <span class="status-pill {{ 'active' if student.status == 'Active' else 'inactive' }}">
+                        <span class="dot"></span>
+                        {{ student.status }}
+                    </span>
+                    {% if student.username %}
+                    <span style="font-family: monospace; font-size: 12.5px; color: var(--secondary); background: var(--primary-light); padding: 2px 8px; border-radius: var(--radius-full); border: 1px solid var(--primary-border);">@{{ student.username }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 6px;">
+            {% if session.get('role') == 'Administrator' %}
+            <form method="POST" action="/student/toggle-status/{{ student.id }}" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-secondary">
+                    Mark {{ 'Inactive' if student.status == 'Active' else 'Active' }}
+                </button>
+            </form>
+            <a href="/student/edit/{{ student.id }}" class="btn btn-sm btn-secondary">Edit Profile</a>
+            <form method="POST" action="/student/delete/{{ student.id }}" style="display:inline;" onsubmit="return confirm('Permanently delete this record?');">
+                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+            </form>
+            {% elif session.get('student_id') == student.id %}
+            <a href="/student/edit/{{ student.id }}" class="btn btn-sm btn-secondary">Edit My Profile</a>
+            {% else %}
+            <span class="stat-pill indigo">Student Profile</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="profile-details-grid">
+        <div class="profile-meta-item">
+            <span class="profile-meta-label">Portal Username</span>
+            <span class="profile-meta-val" style="color: var(--secondary); font-family: monospace;">{{ student.username or 'N/A' }}</span>
+        </div>
+
+        {% if session.get('role') == 'Administrator' or session.get('student_id') == student.id %}
+        <div class="profile-meta-item">
+            <span class="profile-meta-label">Portal Password</span>
+            <span class="profile-meta-val" style="color: var(--amber); font-family: monospace;">{{ student.password or '••••••••' }}</span>
+        </div>
+        {% endif %}
+
+        <div class="profile-meta-item">
+            <span class="profile-meta-label">Student ID</span>
+            <span class="profile-meta-val">STU-{{ "%04d"|format(student.id) }}</span>
+        </div>
+
+        <div class="profile-meta-item">
+            <span class="profile-meta-label">Email Address</span>
+            <span class="profile-meta-val">{{ student.email }}</span>
+        </div>
+
+        <div class="profile-meta-item">
+            <span class="profile-meta-label">Phone</span>
+            <span class="profile-meta-val">{{ student.phone or '—' }}</span>
+        </div>
+
+        <div class="profile-meta-item">
+            <span class="profile-meta-label">Blood Group</span>
+            <span class="profile-meta-val" style="color: var(--danger);">{{ student.blood_group or 'O+' }}</span>
+        </div>
+
+        <div class="profile-meta-item">
+            <span class="profile-meta-label">Date of Birth</span>
+            <span class="profile-meta-val">{{ student.date_of_birth or '—' }}</span>
+        </div>
+
+        <div class="profile-meta-item">
+            <span class="profile-meta-label">Enrollment Date</span>
+            <span class="profile-meta-val">{{ student.enrollment_date or '—' }}</span>
+        </div>
+
+        <div class="profile-meta-item" style="grid-column: 1 / -1;">
+            <span class="profile-meta-label">Residential Address</span>
+            <span class="profile-meta-val" style="font-weight: 500;">{{ student.address or 'No address on file.' }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="panel" style="max-width: 860px; margin: 0 auto;">
+    <div class="panel-header">
+        <h3 class="panel-title">Academic & Attendance Log</h3>
+        <span class="badge-course">{{ attendance_stats.percentage }}% Attendance</span>
+    </div>
+    <div class="panel-body">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+            <div style="background: var(--bg-surface-hover); padding: 14px 18px; border-radius: var(--radius-sm);">
+                <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Attendance Rate</div>
+                <div style="font-size: 22px; font-weight: 700; color: #10b981; margin-top: 2px;">{{ attendance_stats.percentage }}%</div>
+                <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">{{ attendance_stats.attended_days }} attended of {{ attendance_stats.total_days }} days</div>
+            </div>
+
+            <div style="background: var(--bg-surface-hover); padding: 14px 18px; border-radius: var(--radius-sm);">
+                <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Unexcused Absences</div>
+                <div style="font-size: 22px; font-weight: 700; color: var(--text-secondary); margin-top: 2px;">{{ attendance_stats.absent_days }}</div>
+                <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">{{ attendance_stats.late_days }} late marks</div>
+            </div>
+
+            <div style="background: var(--bg-surface-hover); padding: 14px 18px; border-radius: var(--radius-sm);">
+                <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Academic Status</div>
+                <div style="font-size: 22px; font-weight: 700; color: var(--text-primary); margin-top: 2px;">{{ student.status }}</div>
+                <div style="font-size: 11.5px; color: var(--text-dim); margin-top: 4px;">Enrolled in {{ student.course }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
